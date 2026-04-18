@@ -7,9 +7,10 @@ tests/syscalls/syscalls_test
 tests/network/network_test
 tests/sched/sched_test
 tests/block/block_test
+tests/lock/lock_test
 
-# 测试结果
-results/
+# 测试结果（输出目录，不包括文档）
+/results/
 
 # 临时文件
 *.tmp
