@@ -99,10 +99,10 @@ kprobe:vfs_write /pid == $IO_PID/ {
 
 END {
     printf(\"\\n=== 进程 $IO_PID I/O 统计 ===\\n\");
-    printf(\"读操作: %d 次, %d bytes (%.2f KB)\\n\",
-           @read_count, @read_bytes, @read_bytes / 1024.0);
-    printf(\"写操作: %d 次, %d bytes (%.2f KB)\\n\",
-           @write_count, @write_bytes, @write_bytes / 1024.0);
+    printf(\"读操作: %d 次, %d bytes (%d KB)\\n\",
+           @read_count, @read_bytes, @read_bytes / 1024);
+    printf(\"写操作: %d 次, %d bytes (%d KB)\\n\",
+           @write_count, @write_bytes, @write_bytes / 1024);
 }
 " &
 TRACE_PID=$!
@@ -138,8 +138,8 @@ END {
     printf("\n=== 读操作大小分布 ===\n");
     print(@read_size);
     printf("\n=== 总计 ===\n");
-    printf("写入总量: %.2f KB\n", @write_total / 1024.0);
-    printf("读取总量: %.2f KB\n", @read_total / 1024.0);
+    printf("写入总量: %d KB\n", @write_total / 1024);
+    printf("读取总量: %d KB\n", @read_total / 1024);
 }
 '
 ) &
