@@ -78,9 +78,9 @@ echo "测试场景 4: 内存页面压力"
 echo "======================="
 echo ""
 
-echo "测试: 页面故障压力"
-echo "------------------"
-stress-ng --page-in 2 --timeout 30s --metrics-brief
+echo "测试: 页面故障压力（通过大内存访问）"
+echo "-----------------------------------"
+stress-ng --vm 2 --vm-bytes 1G --vm-method all --vm-hang 0 --timeout 30s --metrics-brief
 
 echo ""
 echo ""
