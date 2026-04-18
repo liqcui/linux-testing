@@ -55,8 +55,8 @@ if [[ -z "$USE_KMALLOC" ]]; then
     echo "开始跟踪 malloc (>1MB)..."
     timeout 60 bpftrace -e "
     uprobe:$LIBC_PATH:malloc /arg0 > 1048576/ {
-        printf(\"%s[%d] malloc(%d bytes = %.2f MB)\\n\",
-               comm, pid, arg0, arg0 / 1048576.0);
+        printf(\"%s[%d] malloc(%d bytes = %d MB)\\n\",
+               comm, pid, arg0, arg0 / 1048576);
         @alloc_size = hist(arg0);
         @alloc_count++;
         @total_bytes += arg0;
@@ -65,7 +65,7 @@ if [[ -z "$USE_KMALLOC" ]]; then
     END {
         printf(\"\\n=== malloc 统计 (>1MB) ===\\n\");
         printf(\"总分配次数: %d\\n\", @alloc_count);
-        printf(\"总分配大小: %.2f MB\\n\", @total_bytes / 1048576.0);
+        printf(\"总分配大小: %d MB\\n\", @total_bytes / 1048576);
         printf(\"\\n分配大小分布:\\n\");
         print(@alloc_size);
     }
@@ -80,8 +80,8 @@ else
     echo "开始跟踪 kmalloc (>1MB)..."
     timeout 60 bpftrace -e "
     kprobe:__kmalloc /arg1 > 1048576/ {
-        printf(\"%s[%d] kmalloc(%d bytes = %.2f MB)\\n\",
-               comm, pid, arg1, arg1 / 1048576.0);
+        printf(\"%s[%d] kmalloc(%d bytes = %d MB)\\n\",
+               comm, pid, arg1, arg1 / 1048576);
         @alloc_size = hist(arg1);
         @alloc_count++;
     }
@@ -125,9 +125,9 @@ echo ""
 if [[ -z "$USE_KMALLOC" ]]; then
     timeout 30 bpftrace -e "
     uprobe:$LIBC_PATH:malloc /pid == $MEM_PID && arg0 > 1048576/ {
-        printf(\"[%s] malloc(%d bytes = %.2f MB) at %p\\n\",
+        printf(\"[%s] malloc(%d bytes = %d MB) at %p\\n\",
                strftime(\"%H:%M:%S\", nsecs),
-               arg0, arg0 / 1048576.0, retval);
+               arg0, arg0 / 1048576, retval);
         @[\"Total MB\"] += arg0 / 1048576;
     }
 
