@@ -138,7 +138,7 @@ tracepoint:sched:sched_process_fork {
 
 tracepoint:sched:sched_process_exec {
     printf("[EXEC] %s[%d] exec: %s\n",
-           args->old_comm, args->old_pid, str(args->filename));
+           comm, pid, str(args->filename));
 }
 
 tracepoint:sched:sched_process_exit /@start[pid]/ {
