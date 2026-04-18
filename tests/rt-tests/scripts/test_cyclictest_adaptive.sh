@@ -32,12 +32,14 @@ CYCLICTEST_VERSION=$(cyclictest --version 2>&1 | head -1 || echo "unknown")
 echo "Cyclictest 版本: $CYCLICTEST_VERSION"
 
 # 检查是否支持 -n 参数 (clock_nanosleep)
+# 尝试运行 cyclictest -n 并检查是否报错
 NANOSLEEP_PARAM=""
-if cyclictest --help 2>&1 | grep -q -- "-n"; then
-    NANOSLEEP_PARAM="-n"
-    echo "支持: -n (clock_nanosleep)"
+if cyclictest -n 2>&1 | grep -q "invalid option"; then
+    echo "不支持: -n 参数 (旧版本 cyclictest)"
+    NANOSLEEP_PARAM=""
 else
-    echo "不支持: -n 参数 (旧版本)"
+    echo "支持: -n (clock_nanosleep)"
+    NANOSLEEP_PARAM="-n"
 fi
 
 # 检查是否支持 --histogram 或 -h
