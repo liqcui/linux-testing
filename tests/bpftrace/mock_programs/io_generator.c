@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
     printf("  # 跟踪 VFS 读写\n");
     printf("  sudo bpftrace -e 'kprobe:vfs_read,kprobe:vfs_write /pid == %d/ { @[probe] = count(); }'\n", getpid());
     printf("  # 跟踪读写字节数\n");
-    printf("  sudo bpftrace -e 'tracepoint:syscalls:sys_enter_read,tracepoint:syscalls:sys_enter_write /pid == %d/ ");
-    printf("{ @bytes[probe] = sum(args->count); }'\n\n", getpid());
+    printf("  sudo bpftrace -e 'tracepoint:syscalls:sys_enter_read,tracepoint:syscalls:sys_enter_write /pid == %d/ "
+           "{ @bytes[probe] = sum(args->count); }'\n\n", getpid());
 
     sleep(2);  // 给时间启动 bpftrace
 
