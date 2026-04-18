@@ -56,9 +56,20 @@ case $DISTRO in
 esac
 
 if [[ $INSTALLED -eq 1 ]]; then
-    echo "✓ rt-tests 已通过包管理器安装"
-else
-    echo "包管理器中未找到 rt-tests，将从源码编译"
+    echo "✓ rt-tests 包已安装，验证工具..."
+
+    # 验证是否是正确的 rt-tests（而非 Request Tracker）
+    if command -v cyclictest &>/dev/null; then
+        echo "✓ 验证成功：找到 cyclictest"
+    else
+        echo "✗ 安装的是错误的 rt-tests 包（可能是 Request Tracker）"
+        echo "  将从源码编译正确的实时测试工具"
+        INSTALLED=0
+    fi
+fi
+
+if [[ $INSTALLED -eq 0 ]]; then
+    echo "从源码编译 rt-tests..."
     echo ""
     echo "步骤 2: 安装编译依赖..."
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
