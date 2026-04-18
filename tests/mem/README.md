@@ -436,19 +436,95 @@ struct {
 
 ## 常见问题
 
-### Q: perf mem record 失败怎么办？
+### Q: perf mem record 失败，提示 "memory events not supported" 怎么办？
 
-**A**: 检查权限和硬件支持
+**A**: 这是最常见的问题，特别是在**虚拟机环境**中。
+
+#### 原因
+
+`perf mem` 需要硬件级别的支持：
+- **Intel**: PEBS (Precise Event-Based Sampling)
+- **AMD**: IBS (Instruction-Based Sampling)
+
+这些硬件特性在虚拟机中通常不可用。
+
+#### 解决方案
+
+**方案1: 使用虚拟机专用测试脚本（推荐）**
 
 ```bash
-# 检查权限
-cat /proc/sys/kernel/perf_event_paranoid
-# 如果 > 1，降低限制
-echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+# 在虚拟机环境中使用
+./mem_test_vm.sh
 
-# 检查硬件是否支持 PEBS（Intel）或 IBS（AMD）
-perf mem record -e list
+# 或使用 Makefile
+make perf-vm
 ```
+
+这个脚本使用程序自身的性能测试，不依赖硬件 PMU。
+
+**方案2: 使用程序自身的性能输出**
+
+```bash
+# 直接运行程序查看带宽
+./mem_test
+
+# 输出示例:
+# 顺序读: 15000.00 MB/s
+# 随机读: 1000.00 MB/s  (慢 15 倍！)
+```
+
+**方案3: 对比不同访问模式**
+
+```bash
+# 顺序读 vs 随机读
+./mem_test -t 1 -s 64 -n 5  # 顺序读
+./mem_test -t 3 -s 64 -n 5  # 随机读
+
+# 伪共享 vs 无伪共享
+./mem_test -t 6 -p 8  # 伪共享
+./mem_test -t 7 -p 8  # 无伪共享
+
+# 性能差异直接反映内存访问模式的影响
+```
+
+**方案4: 使用 perf stat（如果硬件事件可用）**
+
+```bash
+# 某些虚拟机可能支持基本的缓存事件
+perf stat -e cache-references,cache-misses ./mem_test -t 1
+
+# 如果不支持，会自动降级到软件事件
+perf stat -e cpu-clock,page-faults ./mem_test -t 1
+```
+
+**方案5: 在物理机上测试**
+
+如果需要完整的 `perf mem` 功能，需要在物理机上运行：
+
+```bash
+# 检查硬件支持
+perf mem record -e list
+
+# 应该看到:
+#   cpu/mem-loads,ldlat=30/P
+#   cpu/mem-stores/P
+```
+
+#### 虚拟机环境总结
+
+**不可用的功能**:
+- ✗ perf mem record/report
+- ✗ 精确的缓存层次分析
+- ✗ 内存延迟采样
+
+**可用的分析方法**:
+- ✓ 程序自身的带宽测试（最可靠）
+- ✓ 性能对比（顺序 vs 随机）
+- ✓ 伪共享检测（通过性能差异）
+- ✓ perf stat 软件事件
+- ✓ time 命令对比
+
+**关键结论**: 即使在虚拟机中，程序输出的带宽数据也足以说明内存访问模式的性能差异！
 
 ### Q: 为什么顺序访问比随机访问快那么多？
 
