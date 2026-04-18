@@ -34,9 +34,19 @@ echo "✓ 结果保存: $OUTPUT_DIR/syscalls_basic_$TIMESTAMP.txt"
 echo ""
 echo "[2/4] 使用 perf stat 分析性能..."
 if command -v perf >/dev/null 2>&1; then
-    perf stat -e cycles -e instructions -e cache-misses -e context-switches \
-        -o "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt" \
-        ./syscalls_test 2>&1 | tee -a "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt"
+    # 检查硬件事件是否可用
+    if perf list hardware 2>/dev/null | grep -q cycles; then
+        echo "使用硬件事件进行分析..."
+        perf stat -e cycles -e instructions -e cache-misses -e context-switches \
+            -o "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt" \
+            ./syscalls_test 2>&1 | tee -a "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt"
+    else
+        echo "⚠ 硬件事件不可用（虚拟机环境），使用软件事件..."
+        perf stat -e cpu-clock -e task-clock -e page-faults -e context-switches \
+            -e cpu-migrations -e minor-faults -e major-faults \
+            -o "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt" \
+            ./syscalls_test 2>&1 | tee -a "$OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt"
+    fi
     echo "✓ 结果保存: $OUTPUT_DIR/syscalls_perf_$TIMESTAMP.txt"
 else
     echo "⚠ perf 未安装，跳过"

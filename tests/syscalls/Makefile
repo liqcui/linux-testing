@@ -29,7 +29,13 @@ perf: $(TARGET)
 	@echo "========================================="
 	@echo "使用 perf 分析系统调用性能"
 	@echo "========================================="
-	perf stat -e cycles -e instructions -e cache-misses -e context-switches ./$(TARGET)
+	@if perf list hardware 2>/dev/null | grep -q cycles; then \
+		echo "使用硬件事件..."; \
+		perf stat -e cycles -e instructions -e cache-misses -e context-switches ./$(TARGET); \
+	else \
+		echo "硬件事件不可用，使用软件事件..."; \
+		perf stat -e cpu-clock -e task-clock -e page-faults -e context-switches -e cpu-migrations ./$(TARGET); \
+	fi
 
 strace: $(TARGET)
 	@echo "========================================="
