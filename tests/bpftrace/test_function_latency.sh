@@ -98,10 +98,10 @@ interval:s:5 {
 END {
     printf(\"\\n=== 最终统计 ===\\n\");
     printf(\"总睡眠次数: %d\\n\", @sleep_count);
-    printf(\"总延迟时间: %d us (%.2f ms)\\n\",
-           @total_sleep_us, @total_sleep_us / 1000.0);
+    printf(\"总延迟时间: %d us (%d ms)\\n\",
+           @total_sleep_us, @total_sleep_us / 1000);
     if (@sleep_count > 0) {
-        printf(\"平均延迟: %d us\\n\", @total_sleep_us / @sleep_count);
+        printf(\"平均延迟: %d us\\n\", (uint64)@total_sleep_us / (uint64)@sleep_count);
     }
     printf(\"\\n延迟分布:\\n\");
     print(@latency_hist);
