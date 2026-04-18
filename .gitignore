@@ -1,0 +1,27 @@
+# 测试结果目录
+results/
+
+# 测试生成的临时文件
+test_io_*.dat
+test
+*.data
+
+# Perf 生成的文件
+perf.data*
+*.old
+
+# 编译产物
+*.o
+*.so
+*.a
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db

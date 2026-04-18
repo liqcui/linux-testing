@@ -1,0 +1,99 @@
+linux-testing/
+│
+├── 📄 README.md                    # 项目主文档
+├── 📄 QUICKSTART.md                # 快速开始指南
+├── 📄 PROJECT_SUMMARY.md           # 项目总结
+├── 📄 .gitignore                   # Git 忽略配置
+│
+├── 🔧 setup/                       # 安装和配置
+│   └── 📜 install-tools.sh         # 一键安装脚本
+│                                      ├─ 安装 perf
+│                                      ├─ 安装 stress-ng
+│                                      ├─ 编译 packetdrill
+│                                      └─ 系统配置
+│
+├── 🛠️  tools/                       # 测试工具
+│   ├── perf/                       # Perf 配置
+│   ├── packetdrill/                # Packetdrill 源码
+│   ├── stress/                     # Stress-ng 配置
+│   ├── 📜 perf-helper.sh           # Perf 辅助脚本
+│   ├── 🔗 packetdrill-bin          # Packetdrill 软链接
+│   └── 📄 README.md                # 工具使用说明
+│
+├── 🧪 scripts/                     # 测试脚本（按类型分类）
+│   ├── 📜 run-all.sh               # 🌟 主脚本 - 运行所有测试
+│   │
+│   ├── 🌐 network/                 # 网络性能测试
+│   │   └── 📜 network-test.sh      # Ping 跟踪、事件分析
+│   │
+│   ├── ⏱️  sched/                   # 进程调度测试
+│   │   └── 📜 sched-test.sh        # 调度延迟、时间线分析
+│   │
+│   ├── 💾 block/                   # 块设备I/O测试
+│   │   └── 📜 block-test.sh        # 缓存/Direct IO/fsync
+│   │
+│   └── 🔌 tcp/                     # TCP协议栈测试
+│       └── 📜 tcp-test.sh          # Packetdrill 测试
+│
+├── 📋 tests/                       # 测试用例（按类型分类）
+│   ├── network/                    # 网络测试用例（待添加）
+│   ├── sched/                      # 调度测试用例（待添加）
+│   ├── block/                      # 块设备测试用例（待添加）
+│   ├── tcp/                        # TCP 测试用例
+│   │   ├── test.pkt                # TCP 测试 1
+│   │   └── basic_tcp.pkt           # 基本三次握手
+│   └── packetdrill/
+│       └── basic_tcp.pkt           # （重复文件）
+│
+├── 📊 results/                     # 测试结果（运行时生成）
+│   ├── network/                    # 网络测试结果
+│   │   ├── ping_trace_*.txt
+│   │   ├── ping_events_*.txt
+│   │   └── report_*.txt
+│   ├── sched/                      # 调度测试结果
+│   │   ├── sched_idle_latency_*.txt
+│   │   ├── sched_stress_latency_*.txt
+│   │   ├── sched_timehist_*.txt
+│   │   └── report_*.txt
+│   ├── block/                      # 块设备测试结果
+│   │   ├── block_cached_*.txt
+│   │   ├── block_direct_*.txt
+│   │   ├── block_events_*.txt
+│   │   └── report_*.txt
+│   ├── tcp/                        # TCP 测试结果
+│   │   └── report_*.txt
+│   └── summary_*.md                # 📈 汇总报告
+│
+├── 📚 docs/                        # 文档
+│   ├── 📄 DETAILED_GUIDE.md        # 详细测试指南（原README）
+│   ├── 📄 PROJECT_STRUCTURE.md     # 项目结构说明
+│   └── 📄 QUICK_REFERENCE.md       # 快速参考卡片
+│
+└── 💡 examples/                    # 示例和教程（待添加）
+    └── （预留）
+
+
+═══════════════════════════════════════════════════════════════════════════
+
+📊 统计信息
+─────────────────────────────────────────────────────────────────────────
+  总文件数:     20+
+  脚本文件:     6 个
+  文档文件:     6 个
+  测试用例:     2 个
+  代码行数:     2000+ 行
+
+🎯 核心功能
+─────────────────────────────────────────────────────────────────────────
+  ✅ 工具自动安装      ✅ 网络性能测试
+  ✅ 进程调度测试      ✅ 块设备I/O测试
+  ✅ TCP协议栈测试     ✅ 详细报告生成
+  ✅ 完善文档          ✅ 模块化设计
+
+🚀 快速开始
+─────────────────────────────────────────────────────────────────────────
+  1. sudo ./setup/install-tools.sh      # 安装工具
+  2. sudo ./scripts/run-all.sh          # 运行测试
+  3. cat results/summary_*.md           # 查看结果
+
+═══════════════════════════════════════════════════════════════════════════
