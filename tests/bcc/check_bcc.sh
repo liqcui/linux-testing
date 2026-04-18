@@ -6,6 +6,18 @@ echo "║         BCC 工具环境检查                                  ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
 
+# 设置 BCC 工具默认路径
+BCC_TOOLS_PATH="${BCC_TOOLS_PATH:-/usr/share/bcc/tools}"
+
+# 将 BCC 工具路径添加到 PATH
+if [[ -d "$BCC_TOOLS_PATH" ]]; then
+    if [[ ":$PATH:" != *":$BCC_TOOLS_PATH:"* ]]; then
+        export PATH="$BCC_TOOLS_PATH:$PATH"
+        echo "✓ 已添加 BCC 工具路径到 PATH: $BCC_TOOLS_PATH"
+        echo ""
+    fi
+fi
+
 # 检查是否以 root 运行
 if [ "$EUID" -ne 0 ]; then
     echo "警告: 某些检查需要 root 权限"
@@ -95,13 +107,29 @@ INSTALLED=0
 MISSING=0
 
 echo "检查 BCC 工具..."
+echo "搜索路径: $PATH"
+echo ""
+
 for tool in "${BCC_TOOLS[@]}"; do
     if command -v $tool >/dev/null 2>&1; then
-        echo "  ✓ $tool"
+        TOOL_PATH=$(command -v $tool)
+        echo "  ✓ $tool ($TOOL_PATH)"
         ((INSTALLED++))
     else
-        echo "  ✗ $tool (未安装)"
-        ((MISSING++))
+        # 检查标准安装路径
+        FOUND=0
+        for search_path in "/usr/share/bcc/tools" "/usr/local/share/bcc/tools"; do
+            if [[ -f "$search_path/$tool" ]]; then
+                echo "  ✓ $tool ($search_path/$tool - 不在 PATH 中)"
+                ((INSTALLED++))
+                FOUND=1
+                break
+            fi
+        done
+        if [[ $FOUND -eq 0 ]]; then
+            echo "  ✗ $tool (未安装)"
+            ((MISSING++))
+        fi
     fi
 done
 echo ""

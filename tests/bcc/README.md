@@ -47,7 +47,48 @@ ls /usr/share/bcc/tools/
 
 # 或者在 PATH 中
 which execsnoop
+
+# 设置默认路径（可选）
+export BCC_TOOLS_PATH="/usr/share/bcc/tools"
+export PATH="$BCC_TOOLS_PATH:$PATH"
 ```
+
+### 环境检查
+
+运行环境检查脚本（会自动设置 PATH）：
+
+```bash
+cd tests/bcc
+sudo ./check_bcc.sh
+```
+
+---
+
+## ⚠️ 内核兼容性
+
+某些 BCC 工具可能在不同内核版本中遇到兼容性问题。最常见的问题：
+
+### cachestat 兼容性问题
+
+**错误信息：**
+```
+cannot attach kprobe, probe entry may not exist
+Exception: Failed to attach BPF program b'do_count' to kprobe b'account_page_dirtied'
+```
+
+**原因：** 在 Linux 5.16+ 内核中，`account_page_dirtied` 被重命名为 `folio_account_dirtied`
+
+**解决方案：** 使用我们提供的兼容版本
+
+```bash
+# 使用兼容的 cachestat
+sudo python3 cachestat_wrapper.py 1
+
+# 或运行测试脚本（自动使用兼容版本）
+sudo ./test_cachestat.sh
+```
+
+详细说明：[KERNEL_COMPATIBILITY.md](KERNEL_COMPATIBILITY.md)
 
 ---
 
@@ -57,12 +98,16 @@ which execsnoop
 # 进入测试目录
 cd tests/bcc
 
+# 检查环境（会自动设置 PATH）
+sudo ./check_bcc.sh
+
 # 运行所有测试
 ./run_all_tests.sh
 
 # 运行单个测试
 ./test_execsnoop.sh
 ./test_opensnoop.sh
+./test_cachestat.sh  # 使用兼容版本
 ```
 
 ---
