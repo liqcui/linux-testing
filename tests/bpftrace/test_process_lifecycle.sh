@@ -71,7 +71,7 @@ echo ""
 timeout 30 bpftrace -e '
 tracepoint:sched:sched_process_exec {
     printf("%s[%d] exec: %s\n",
-           args->old_comm, args->old_pid, str(args->filename));
+           comm, pid, str(args->filename));
     @exec_programs[str(args->filename)] = count();
 }
 
