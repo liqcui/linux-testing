@@ -49,20 +49,18 @@ echo ""
 echo "开始跟踪 TCP 状态变化 (30秒)..."
 echo ""
 timeout 30 bpftrace -e '
-kprobe:tcp_set_state {
-    $sk = (struct sock *)arg0;
-    $newstate = arg1;
-    $oldstate = $sk->__sk_common.skc_state;
-
-    $lport = $sk->__sk_common.skc_num;
-    $dport = $sk->__sk_common.skc_dport;
-    $dport = ($dport >> 8) | (($dport << 8) & 0xff00);
-
-    printf("%s [%d] %s:%d -> %s:%d state: %d -> %d\n",
+tracepoint:sock:inet_sock_set_state {
+    printf("%s [%d] %s:%d -> %s:%d state: %d -> %d (protocol: %d)\\n",
         comm, pid,
-        ntop($sk->__sk_common.skc_rcv_saddr), $lport,
-        ntop($sk->__sk_common.skc_daddr), $dport,
-        $oldstate, $newstate);
+        ntop(args->saddr), args->sport,
+        ntop(args->daddr), args->dport,
+        args->oldstate, args->newstate,
+        args->protocol);
+    @state_changes++;
+}
+
+END {
+    printf("\\n总状态变化: %d 次\\n", @state_changes);
 }
 '
 ) &
@@ -103,26 +101,19 @@ echo ""
 echo "跟踪新建 TCP 连接 (30秒)..."
 echo ""
 timeout 30 bpftrace -e '
-kprobe:tcp_set_state {
-    $sk = (struct sock *)arg0;
-    $newstate = arg1;
-
-    if ($newstate == 1) {  // ESTABLISHED
-        $lport = $sk->__sk_common.skc_num;
-        $dport = $sk->__sk_common.skc_dport;
-        $dport = ($dport >> 8) | (($dport << 8) & 0xff00);
-
-        printf("%s [%d] NEW CONNECTION: %s:%d -> %s:%d\n",
+tracepoint:sock:inet_sock_set_state {
+    if (args->newstate == 1 && args->protocol == 6) {  // ESTABLISHED and TCP
+        printf("%s [%d] NEW CONNECTION: %s:%d -> %s:%d\\n",
             comm, pid,
-            ntop($sk->__sk_common.skc_rcv_saddr), $lport,
-            ntop($sk->__sk_common.skc_daddr), $dport);
+            ntop(args->saddr), args->sport,
+            ntop(args->daddr), args->dport);
 
         @connections[comm] = count();
     }
 }
 
 END {
-    printf("\n=== TCP 连接统计 ===\n");
+    printf("\\n=== TCP 连接统计 ===\\n");
     print(@connections);
 }
 '
