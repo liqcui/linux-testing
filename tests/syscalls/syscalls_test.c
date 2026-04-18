@@ -68,7 +68,7 @@ void print_stats(perf_stats_t *stats) {
 void test_getpid(long iterations) {
     double start, end;
     long i;
-    pid_t pid;
+    pid_t pid = 0;
     perf_stats_t stats;
 
     printf("\n[1/5] 测试 getpid() 系统调用\n");

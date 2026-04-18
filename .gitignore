@@ -1,27 +1,28 @@
-# 测试结果目录
-results/
-
-# 测试生成的临时文件
-test_io_*.dat
-test
-*.data
-
-# Perf 生成的文件
-perf.data*
-*.old
-
 # 编译产物
 *.o
-*.so
 *.a
+*.so
+*.dylib
+tests/syscalls/syscalls_test
+tests/network/network_test
+tests/sched/sched_test
+tests/block/block_test
 
-# 编辑器文件
-.vscode/
-.idea/
+# 测试结果
+results/
+
+# 临时文件
+*.tmp
+*.log
+test.pkt
+test
+
+# macOS
+.DS_Store
+
+# 编辑器
 *.swp
 *.swo
 *~
-
-# 系统文件
-.DS_Store
-Thumbs.db
+.vscode/
+.idea/
