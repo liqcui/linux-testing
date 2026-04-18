@@ -70,6 +70,11 @@ linux-testing/
 │   ├── tcp/            # TCP协议栈测试
 │   └── run-all.sh      # 运行所有测试
 ├── tests/              # 测试用例
+│   ├── syscalls/       # 系统调用性能测试
+│   ├── lock/           # 锁竞争测试
+│   ├── mem/            # 内存访问测试
+│   ├── bcc/            # BCC 工具测试
+│   └── bpftrace/       # bpftrace 测试
 ├── results/            # 测试结果（自动生成）
 ├── docs/               # 文档
 └── examples/           # 示例
@@ -158,6 +163,76 @@ packetdrill tests/tcp/basic_tcp.pkt
 # 详细输出
 packetdrill --verbose tests/tcp/basic_tcp.pkt
 ```
+
+### 5. BCC 工具测试
+
+使用 BPF Compiler Collection (BCC) 工具进行系统跟踪。
+
+**测试内容**:
+- 进程执行跟踪 (execsnoop)
+- 文件操作跟踪 (opensnoop)
+- 磁盘I/O跟踪 (biosnoop)
+- TCP连接跟踪 (tcpconnect, tcpaccept)
+- CPU性能分析 (profile)
+- 内存泄漏检测 (memleak)
+
+**快速开始**:
+```bash
+cd tests/bcc
+
+# 安装 BCC 工具
+sudo ./setup/install-bcc.sh
+
+# 检查环境
+sudo ./check_bcc.sh
+
+# 运行测试 (使用 mock 程序)
+cd mock_programs && make
+cd ..
+sudo python3 test_execsnoop.py
+```
+
+详细文档：[tests/bcc/README.md](tests/bcc/README.md)
+
+### 6. bpftrace 测试
+
+使用 bpftrace 进行高级动态跟踪。
+
+**测试内容**:
+- 系统调用统计
+- 内核函数延迟分析
+- TCP 连接生命周期
+- 内存分配跟踪
+- 进程生命周期监控
+- VFS I/O 操作分析
+
+**快速开始**:
+```bash
+cd tests/bpftrace
+
+# 安装 bpftrace
+sudo ./install_bpftrace.sh
+
+# 检查环境
+sudo ./check_bpftrace.sh
+
+# 编译 mock 程序
+cd mock_programs && make
+cd ..
+
+# 运行测试
+sudo ./test_syscall_count.sh       # 系统调用统计
+sudo ./test_function_latency.sh    # 延迟直方图
+sudo ./test_tcp_lifecycle.sh       # TCP 状态跟踪
+sudo ./test_memory_alloc.sh        # 内存分配
+sudo ./test_process_lifecycle.sh   # 进程生命周期
+sudo ./test_vfs_io.sh              # I/O 跟踪
+
+# 运行所有测试
+sudo ./run_all_tests.sh
+```
+
+详细文档：[tests/bpftrace/README.md](tests/bpftrace/README.md)
 
 ## 测试结果
 
