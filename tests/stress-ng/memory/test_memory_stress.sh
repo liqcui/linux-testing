@@ -64,7 +64,7 @@ echo ""
 
 echo "测试: malloc 压力（快速分配/释放）"
 echo "-----------------------------------"
-stress-ng --malloc 4 --malloc-bytes 256M --malloc-max 1G --timeout 30s --metrics-brief
+stress-ng --malloc 4 --malloc-bytes 256M --malloc-max 128K --timeout 30s --metrics-brief
 
 echo ""
 echo ""
