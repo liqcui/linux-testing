@@ -1,6 +1,13 @@
 #!/bin/bash
 # opensnoop 测试脚本
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 加载公共函数
+if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
+    source "$SCRIPT_DIR/common.sh"
+fi
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║         opensnoop - 文件打开跟踪测试                      ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
@@ -13,14 +20,18 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 检查 opensnoop 是否可用
-if ! command -v opensnoop >/dev/null 2>&1; then
-    echo "错误: opensnoop 未安装"
-    echo "安装方法: sudo dnf install bcc-tools"
+# 查找 opensnoop 工具
+OPENSNOOP=$(find_bcc_tool opensnoop)
+
+if [[ -z "$OPENSNOOP" ]]; then
+    echo "错误: opensnoop 未找到"
+    echo ""
+    show_bcc_install_help
     exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "使用工具: $OPENSNOOP"
+echo ""
 MOCK_DIR="$SCRIPT_DIR/mock_programs"
 
 # 编译模拟程序
@@ -41,7 +52,7 @@ echo "命令: opensnoop"
 echo "说明: 实时显示所有文件打开操作"
 echo ""
 
-timeout 10 opensnoop > /tmp/opensnoop_basic.txt 2>&1 &
+timeout 10 "$OPENSNOOP" > /tmp/opensnoop_basic.txt 2>&1 &
 SNOOP_PID=$!
 
 sleep 1
@@ -88,7 +99,7 @@ MOCK_PID=$!
 sleep 1
 
 echo "跟踪进程 $MOCK_PID..."
-timeout 5 opensnoop -p $MOCK_PID > /tmp/opensnoop_pid.txt 2>&1 &
+timeout 5 "$OPENSNOOP"-p $MOCK_PID > /tmp/opensnoop_pid.txt 2>&1 &
 SNOOP_PID=$!
 
 wait $MOCK_PID
@@ -107,7 +118,7 @@ echo "命令: opensnoop -x"
 echo "说明: 只显示打开失败的操作（FD=-1）"
 echo ""
 
-timeout 5 opensnoop -x > /tmp/opensnoop_fail.txt 2>&1 &
+timeout 5 "$OPENSNOOP"-x > /tmp/opensnoop_fail.txt 2>&1 &
 SNOOP_PID=$!
 
 sleep 1

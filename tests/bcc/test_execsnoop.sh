@@ -1,6 +1,13 @@
 #!/bin/bash
 # execsnoop 测试脚本
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 加载公共函数
+if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
+    source "$SCRIPT_DIR/common.sh"
+fi
+
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║         execsnoop - 进程执行跟踪测试                      ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
@@ -13,15 +20,18 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 检查 execsnoop 是否可用
-if ! command -v execsnoop >/dev/null 2>&1; then
-    echo "错误: execsnoop 未安装"
+# 查找 execsnoop 工具
+EXECSNOOP=$(find_bcc_tool execsnoop)
+
+if [[ -z "$EXECSNOOP" ]]; then
+    echo "错误: execsnoop 未找到"
     echo ""
-    echo "安装方法:"
-    echo "  RHEL/CentOS/Fedora: sudo dnf install bcc-tools"
-    echo "  Ubuntu/Debian:      sudo apt-get install bpfcc-tools"
+    show_bcc_install_help
     exit 1
 fi
+
+echo "使用工具: $EXECSNOOP"
+echo ""
 
 echo "========================================="
 echo "1. 基本使用 - 跟踪所有进程执行"
@@ -36,7 +46,7 @@ echo "同时在另一个终端运行一些命令来产生测试数据"
 echo ""
 
 # 后台运行 execsnoop 5秒
-timeout 5 execsnoop > /tmp/execsnoop_basic.txt 2>&1 &
+timeout 5 "$EXECSNOOP" > /tmp/execsnoop_basic.txt 2>&1 &
 SNOOP_PID=$!
 
 # 等待 execsnoop 启动
@@ -80,7 +90,7 @@ echo "命令: execsnoop -t"
 echo "说明: 显示每个进程执行的精确时间"
 echo ""
 
-timeout 5 execsnoop -t > /tmp/execsnoop_time.txt 2>&1 &
+timeout 5 "$EXECSNOOP" -t > /tmp/execsnoop_time.txt 2>&1 &
 SNOOP_PID=$!
 
 sleep 1
@@ -107,7 +117,7 @@ echo "命令: execsnoop -x"
 echo "说明: 只显示返回值非 0 的失败执行"
 echo ""
 
-timeout 5 execsnoop -x > /tmp/execsnoop_fail.txt 2>&1 &
+timeout 5 "$EXECSNOOP" -x > /tmp/execsnoop_fail.txt 2>&1 &
 SNOOP_PID=$!
 
 sleep 1
@@ -135,7 +145,7 @@ echo "命令: execsnoop -n bash"
 echo "说明: 只显示 bash 进程执行的命令"
 echo ""
 
-timeout 5 execsnoop -n bash > /tmp/execsnoop_filter.txt 2>&1 &
+timeout 5 "$EXECSNOOP" -n bash > /tmp/execsnoop_filter.txt 2>&1 &
 SNOOP_PID=$!
 
 sleep 1
