@@ -350,35 +350,117 @@ void *logger_thread(void *arg) {
 
 ## 常见问题
 
-### Q: perf lock record 失败怎么办？
+### Q: perf lock report 只显示一条记录或数字地址怎么办？
 
-**A**: 检查权限和内核支持
+**A**: 这是最常见的问题，有几个原因和解决方案：
+
+#### 原因1: 内核缺少 CONFIG_LOCK_STAT 支持
 
 ```bash
-# 检查权限
-cat /proc/sys/kernel/perf_event_paranoid
-# 如果 > 1，降低限制
-echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
-
 # 检查内核是否支持 lock 跟踪
 perf list | grep lock:
-# 应该看到 lock:contention_begin, lock:contention_end 等事件
+
+# 如果没有输出或只有很少的事件，说明内核不支持
+# 解决方案：
+# 1. 使用发行版的调试内核
+# 2. 或者重新编译内核，启用 CONFIG_LOCK_STAT=y
+```
+
+#### 原因2: 缺少调试符号
+
+```bash
+# 用 -g 重新编译以获得符号信息
+gcc -g -O2 -Wall -Wextra -pthread -o lock_test lock_test.c
+
+# 再次运行 perf lock
+perf lock record -g ./lock_test -t 1 -p 8 -n 500000
+perf lock report
+```
+
+#### 原因3: 锁竞争强度不够
+
+```bash
+# 增加线程数和迭代次数
+perf lock record ./lock_test -t 1 -p 8 -n 500000
+
+# 而不是默认的 -p 4 -n 100000
+```
+
+#### 替代分析方案
+
+如果 perf lock 不工作，可以使用以下替代方案：
+
+**方案1: 使用程序自身的性能输出**
+```bash
+# 对比不同场景的 ops/sec
+./lock_test -t 1 -p 8  # 单锁竞争
+./lock_test -t 2 -p 8  # 多锁并发
+./lock_test -t 6 -p 8  # 伪共享
+./lock_test -t 7 -p 8  # 无伪共享
+
+# 性能差异直接反映锁竞争程度
+```
+
+**方案2: 使用 perf stat 查看系统指标**
+```bash
+# 查看上下文切换次数（锁竞争的副作用）
+perf stat -e context-switches,cpu-migrations ./lock_test -t 1 -p 8
+
+# 对比不同场景
+```
+
+**方案3: 使用 strace 查看 futex 系统调用**
+```bash
+# futex 是 pthread_mutex 的底层实现
+strace -c -f ./lock_test -t 1 -p 4 -n 50000
+
+# 查看 futex 调用次数和时间占比
+```
+
+**方案4: 使用调试脚本**
+```bash
+# 运行完整的诊断脚本
+./lock_test_debug.sh
+
+# 会自动尝试多种分析方法并给出建议
 ```
 
 ### Q: 为什么 perf lock report 显示 "no data"？
 
 **A**: 可能原因：
 1. 程序运行时间太短，没有足够的锁事件
-2. 内核不支持锁跟踪事件
-3. 增加迭代次数: `./lock_test -n 1000000`
+2. 内核不支持锁跟踪事件（最常见）
+3. perf 版本太老
+
+**解决方案**:
+```bash
+# 1. 增加测试强度
+./lock_test -p 8 -n 1000000
+
+# 2. 检查内核支持
+perf list | grep lock:
+
+# 3. 使用替代方案（见上一个问题）
+```
 
 ### Q: 如何减少锁竞争？
 
 **A**: 优化策略：
-1. 分片锁（多个独立锁）
-2. 减少持锁时间
-3. 使用无锁数据结构（适用场景有限）
-4. 使用读写锁（读多写少）
+1. **分片锁**（多个独立锁）- 提升 3-5倍
+2. **减少持锁时间** - 提升 2-3倍
+3. **使用读写锁**（读多写少）- 提升 2-10倍
+4. **无锁数据结构**（适用场景有限）- 提升 5-20倍
+
+**验证优化效果**:
+```bash
+# 对比优化前后的性能
+./lock_test -t 1 -p 8  # 单锁（优化前）
+./lock_test -t 2 -p 8  # 多锁（优化后）
+
+# 或使用 time 命令
+time ./lock_test -t 1 -p 8
+time ./lock_test -t 2 -p 8
+```
 
 ---
 
