@@ -15,7 +15,8 @@ lmbench/
 │   ├── lat_mem.c                   # 内存访问延迟测试
 │   └── bw_mem.c                    # 内存带宽测试
 ├── scripts/
-│   └── test_lmbench.sh             # 自动化测试脚本
+│   ├── test_lmbench.sh             # 基础自动化测试脚本
+│   └── test_lmbench_advanced.sh    # 高级参数化测试脚本
 └── results/                        # 测试结果目录
 ```
 
@@ -583,7 +584,148 @@ sudo cpupower frequency-set -g performance
 numactl --cpunodebind=0 --membind=0 ./test
 ```
 
+## 高级参数化测试
+
+### 概述
+
+`test_lmbench_advanced.sh` 提供了高级参数化测试功能，覆盖更多场景和参数范围，用于全面的性能分析和对比测试。
+
+### 测试覆盖
+
+**1. 内存带宽测试 - 参数化大小**
+- 测试范围: 512B - 64MB
+- 测试操作: 读、写、拷贝、读修改写
+- 目的: 识别缓存层次边界和带宽特性
+
+```bash
+大小范围: 512B, 1KB, 2KB, 4KB, ..., 32MB, 64MB
+覆盖层级: L1 cache → L2 cache → L3 cache → 主内存
+```
+
+**2. 内存延迟测试 - 参数化stride**
+- Stride范围: 16B - 256B
+- 测试模式: 随机访问
+- 目的: 分析缓存行影响和访问模式
+
+```bash
+Stride: 16B, 32B, 64B (缓存行), 128B, 256B
+分析: 缓存行内访问 vs 跨缓存行访问
+```
+
+**3. 上下文切换测试 - 参数化进程数**
+- 进程数范围: 2 - 64
+- 数据大小范围: 0B - 4KB
+- 目的: 评估调度开销和缓存污染
+
+```bash
+进程数: 2, 4, 8, 16, 32, 64
+数据量: 0B, 64B, 512B, 1KB, 4KB
+```
+
+**4. 系统调用延迟测试 - 全面覆盖**
+- 覆盖所有常用系统调用
+- 从简单到复杂的调用链
+- 性能趋势分析
+
+### 运行高级测试
+
+```bash
+cd scripts
+./test_lmbench_advanced.sh
+```
+
+### 高级测试结果文件
+
+- `bw_mem_parametric.txt` - 参数化内存带宽结果
+- `lat_mem_parametric.txt` - 参数化内存延迟结果
+- `lat_ctx_parametric.txt` - 参数化上下文切换结果
+- `lat_syscall_comprehensive.txt` - 全面系统调用测试
+- `comprehensive_report.txt` - 综合分析报告
+- `trend_analysis.txt` - 性能趋势分析指南
+- `comparison_guide.txt` - 对比测试使用指南
+
+### 应用场景
+
+**场景1: 硬件性能评估**
+```bash
+# 在不同硬件上运行
+./test_lmbench_advanced.sh
+
+# 对比带宽曲线识别缓存大小
+# 机器A: L3=8MB (带宽在8MB处下降)
+# 机器B: L3=16MB (带宽在16MB处下降)
+```
+
+**场景2: 内核版本对比**
+```bash
+# 内核 5.10 测试
+./test_lmbench_advanced.sh
+cp -r results/lmbench-advanced-* baseline/
+
+# 升级到内核 5.15
+# 再次测试
+./test_lmbench_advanced.sh
+
+# 对比性能变化
+diff -y baseline/*/lat_syscall_comprehensive.txt \
+        results/*/lat_syscall_comprehensive.txt
+```
+
+**场景3: 系统调优验证**
+```bash
+# 优化前 - baseline
+./test_lmbench_advanced.sh
+
+# 应用优化（如CPU governor、huge pages、NUMA绑定）
+sudo cpupower frequency-set -g performance
+echo 1024 > /proc/sys/vm/nr_hugepages
+
+# 优化后 - 验证效果
+./test_lmbench_advanced.sh
+
+# 量化性能提升
+```
+
+### 性能趋势分析
+
+**内存带宽趋势预期:**
+```
+512B-32KB:    L1带宽 (~100-200 GB/s)
+32KB-256KB:   L2带宽 (~50-100 GB/s)
+256KB-8MB:    L3带宽 (~20-40 GB/s)
+> 8MB:        内存带宽 (~10-25 GB/s)
+```
+
+**内存延迟趋势预期:**
+```
+Stride 16B:   最低延迟 (缓存行内)
+Stride 32B:   略微增加
+Stride 64B:   缓存行边界，延迟跳跃
+Stride 128B+: 更多缓存未命中，延迟显著增加
+```
+
+**上下文切换趋势预期:**
+```
+2进程:     最低延迟 (最少调度)
+4-8进程:   接近核心数，延迟适中
+16-32进程: 超过核心数，调度开销增加
+64进程:    高调度开销和缓存抖动
+```
+
+### 与标准测试的区别
+
+| 特性 | test_lmbench.sh | test_lmbench_advanced.sh |
+|------|----------------|-------------------------|
+| 测试深度 | 基础单点测试 | 参数化范围测试 |
+| 数据点数 | 少（~10个） | 多（~100个） |
+| 趋势分析 | 无 | 有 |
+| 运行时间 | 短（~1分钟） | 长（~5-10分钟） |
+| 使用场景 | 快速检查 | 深入分析 |
+| 对比测试 | 基础 | 高级 |
+
 ## 测试结果
+
+### 基础测试结果
 
 运行`test_lmbench.sh`后生成以下文件：
 
@@ -598,6 +740,17 @@ numactl --cpunodebind=0 --membind=0 ./test
 - `recommendations.txt` - 优化建议
 - `reference.txt` - 性能参考值
 - `report.txt` - 完整报告
+
+### 高级测试结果
+
+运行`test_lmbench_advanced.sh`后额外生成：
+
+- `bw_mem_parametric.txt` - 参数化带宽测试
+- `lat_mem_parametric.txt` - 参数化延迟测试
+- `lat_ctx_parametric.txt` - 参数化上下文切换测试
+- `comprehensive_report.txt` - 综合报告
+- `trend_analysis.txt` - 趋势分析
+- `comparison_guide.txt` - 对比指南
 
 ## 应用场景
 
