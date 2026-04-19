@@ -1,0 +1,21 @@
+# FIO配置: 顺序读测试
+# 测试场景: 大文件顺序读取（如视频流、日志分析）
+
+[global]
+# 通用设置
+ioengine=libaio          # I/O引擎: Linux异步I/O
+direct=1                 # 绕过系统缓存(O_DIRECT)
+iodepth=32               # 队列深度
+runtime=60               # 运行时间(秒)
+time_based=1             # 基于时间而非大小
+group_reporting=1        # 汇总报告
+
+# 文件设置
+filename=/tmp/fio-test-file
+size=4G                  # 测试文件大小
+numjobs=1                # 线程数
+
+[sequential-read]
+# 顺序读
+rw=read                  # 读操作
+bs=128k                  # 块大小

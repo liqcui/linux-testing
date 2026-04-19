@@ -1,0 +1,19 @@
+# FIO配置: IOPS测试
+# 测试场景: 最大IOPS性能（多队列深度）
+
+[global]
+ioengine=libaio
+direct=1
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=4                # 4个并发任务
+
+[iops-test]
+# IOPS测试
+rw=randread              # 随机读
+bs=4k                    # 4K块大小
+iodepth=64               # 高队列深度

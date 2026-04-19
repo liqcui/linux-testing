@@ -1,0 +1,20 @@
+# FIO配置: 混合读写测试
+# 测试场景: 数据库负载（70%读 + 30%写）
+
+[global]
+ioengine=libaio
+direct=1
+iodepth=32
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=1
+
+[mixed-rw-70-30]
+# 混合读写 70/30
+rw=randrw                # 随机读写
+rwmixread=70             # 读比例70%
+bs=4k

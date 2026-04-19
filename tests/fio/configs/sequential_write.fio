@@ -1,0 +1,19 @@
+# FIO配置: 顺序写测试
+# 测试场景: 大文件顺序写入（如数据备份、日志写入）
+
+[global]
+ioengine=libaio
+direct=1
+iodepth=32
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=1
+
+[sequential-write]
+# 顺序写
+rw=write                 # 写操作
+bs=128k                  # 块大小

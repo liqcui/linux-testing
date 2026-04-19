@@ -1,0 +1,19 @@
+# FIO配置: 随机写测试
+# 测试场景: 数据库更新、随机写入
+
+[global]
+ioengine=libaio
+direct=1
+iodepth=32
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=1
+
+[random-write]
+# 随机写
+rw=randwrite             # 随机写
+bs=4k                    # 小块随机I/O

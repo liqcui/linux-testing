@@ -1,0 +1,19 @@
+# FIO配置: 随机读测试
+# 测试场景: 数据库查询、随机访问
+
+[global]
+ioengine=libaio
+direct=1
+iodepth=32
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=1
+
+[random-read]
+# 随机读
+rw=randread              # 随机读
+bs=4k                    # 小块随机I/O

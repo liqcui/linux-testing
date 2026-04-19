@@ -1,0 +1,19 @@
+# FIO配置: 延迟测试
+# 测试场景: I/O延迟敏感应用
+
+[global]
+ioengine=libaio
+direct=1
+runtime=60
+time_based=1
+group_reporting=1
+
+filename=/tmp/fio-test-file
+size=4G
+numjobs=1
+
+[latency-test]
+# 延迟测试
+rw=randread              # 随机读
+bs=4k
+iodepth=1                # 低队列深度以测量延迟
