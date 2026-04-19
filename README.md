@@ -74,7 +74,9 @@ linux-testing/
 │   ├── lock/           # 锁竞争测试
 │   ├── mem/            # 内存访问测试
 │   ├── bcc/            # BCC 工具测试
-│   └── bpftrace/       # bpftrace 测试
+│   ├── bpftrace/       # bpftrace 测试
+│   ├── stress-ng/      # stress-ng 专项测试（内存/网络/文件系统）
+│   └── rt-tests/       # rt-tests 实时性能测试
 ├── results/            # 测试结果（自动生成）
 ├── docs/               # 文档
 └── examples/           # 示例
@@ -233,6 +235,69 @@ sudo ./run_all_tests.sh
 ```
 
 详细文档：[tests/bpftrace/README.md](tests/bpftrace/README.md)
+
+### 7. stress-ng 专项测试
+
+使用 stress-ng 对内存、网络、文件系统子系统进行专项性能测试。
+
+**测试内容**:
+- **内存子系统测试** (9项): VM分配、memcpy带宽、mmap页面错误、Hugepage、NUMA、cache
+- **网络子系统测试** (9项): TCP/UDP/Unix Socket、网络吞吐量、零拷贝传输
+- **文件系统测试** (10项): HDD写入、I/O IOPS、sync延迟、元数据操作、文件锁
+
+**快速开始**:
+```bash
+cd tests/stress-ng/scripts
+
+# 内存子系统测试（约9分钟）
+sudo ./test_memory.sh
+
+# 网络子系统测试（约9分钟）
+sudo ./test_network.sh
+
+# 文件系统测试（约10分钟）
+sudo ./test_filesystem.sh
+```
+
+**性能评级示例**:
+- memcpy带宽: > 15 GB/s ★★★★★ 优秀 (DDR4-3200)
+- TCP Socket: > 100K ops/s ★★★★★ 优秀
+- NVMe SSD写入: > 2000 MB/s ★★★★★ 优秀
+
+**详细解读**: [tests/stress-ng/INTERPRETATION_GUIDE.md](tests/stress-ng/INTERPRETATION_GUIDE.md)
+
+### 8. rt-tests 实时性能测试
+
+使用 rt-tests 测试系统实时响应能力和延迟特性。
+
+**测试内容**:
+- **cyclictest 延迟测试**: 完整实时性测试、多场景对比、CDF分析
+- **压力+实时性综合测试**: 6种压力场景下的实时性能评估
+- **动态压力调节测试**: 阶梯式CPU负载测试、算法影响对比
+
+**快速开始**:
+```bash
+cd tests/rt-tests/scripts
+
+# 完整实时性测试
+sudo ./cyclictest_rt_full.sh
+
+# 三种场景对比测试
+sudo ./cyclictest_three_scenarios.sh
+
+# 压力+实时性综合测试
+sudo ./stress_cyclictest_integrated.sh
+
+# 动态压力调节测试
+sudo ./adaptive_stress_rt_test.sh
+```
+
+**性能评级**:
+- 优秀 (硬实时): Max延迟 < 50μs
+- 良好 (软实时): Max延迟 < 100μs
+- 可接受 (准实时): Max延迟 < 500μs
+
+详细文档：[tests/rt-tests/README.md](tests/rt-tests/README.md)
 
 ## 测试结果
 
