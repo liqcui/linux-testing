@@ -1,18 +1,20 @@
 # Linux 性能测试工具套件
 
-一个完整的 Linux 系统性能测试工具集，涵盖网络、调度、块设备和 TCP 协议栈的性能分析。
+一个完整的 Linux 系统测试工具集，包含30+专业测试套件，涵盖性能分析、功能验证、安全测试、实时性评估等全方位测试场景。
 
 [![Linux](https://img.shields.io/badge/OS-Linux-blue.svg)](https://www.kernel.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## 特性
 
+- ✅ **全面覆盖** - 30+测试套件，覆盖性能、功能、安全、虚拟化等
 - ✅ **自动化测试** - 一键运行所有性能测试
-- ✅ **分类组织** - 按测试类型清晰分类（网络/调度/块设备/TCP）
-- ✅ **工具安装** - 自动安装和配置所需工具
-- ✅ **详细报告** - 生成可读性强的测试报告
+- ✅ **分类组织** - 按测试类型清晰分类（网络/内存/I/O/实时性/eBPF等）
+- ✅ **专业工具** - 集成业界标准测试工具（iperf3/fio/UnixBench/LTP等）
+- ✅ **性能基准** - 提供性能评级和优化建议
+- ✅ **详细报告** - 自动生成测试报告和可视化图表
 - ✅ **独立运行** - 每个测试可单独执行
-- ✅ **丰富文档** - 详细的使用说明和原理解释
+- ✅ **丰富文档** - 详细的使用说明、结果解读和优化指南
 
 ## 快速开始
 
@@ -69,14 +71,35 @@ linux-testing/
 │   ├── block/          # 块设备I/O测试
 │   ├── tcp/            # TCP协议栈测试
 │   └── run-all.sh      # 运行所有测试
-├── tests/              # 测试用例
+├── tests/              # 测试用例（共30+测试套件）
+│   ├── bcc/            # BCC eBPF 工具测试
+│   ├── bpftrace/       # bpftrace 动态追踪
+│   ├── ebpf/           # eBPF 综合测试套件
+│   ├── perf/           # perf 性能分析
+│   ├── stress-ng/      # stress-ng 专项测试（内存/网络/文件系统）
+│   ├── rt-tests/       # rt-tests 实时性能测试
+│   ├── iperf3/         # iperf3 网络吞吐量测试
+│   ├── netperf/        # netperf 网络性能测试
+│   ├── qperf/          # qperf RDMA/网络测试
+│   ├── fio/            # fio 磁盘I/O测试
+│   ├── iozone/         # iozone 文件系统基准测试
+│   ├── stream/         # STREAM 内存带宽测试
+│   ├── memtester/      # memtester 内存测试
+│   ├── lmbench/        # lmbench 微基准测试
+│   ├── unixbench/      # UnixBench 综合基准测试
+│   ├── stressapptest/  # stressapptest 硬件压力测试
+│   ├── ltp/            # LTP Linux测试项目
+│   ├── cgroup/         # cgroup 资源控制测试
+│   ├── namespace/      # namespace 命名空间测试
+│   ├── security/       # 安全功能测试
+│   ├── selinux/        # SELinux 测试
+│   ├── kvm/            # KVM 虚拟化测试
+│   ├── kernel-module/  # 内核模块开发测试
+│   ├── device-drivers/ # 设备驱动测试
+│   ├── memory-analysis/# 内存分析
 │   ├── syscalls/       # 系统调用性能测试
 │   ├── lock/           # 锁竞争测试
-│   ├── mem/            # 内存访问测试
-│   ├── bcc/            # BCC 工具测试
-│   ├── bpftrace/       # bpftrace 测试
-│   ├── stress-ng/      # stress-ng 专项测试（内存/网络/文件系统）
-│   └── rt-tests/       # rt-tests 实时性能测试
+│   └── mem/            # 内存访问测试
 ├── results/            # 测试结果（自动生成）
 ├── docs/               # 文档
 └── examples/           # 示例
@@ -298,6 +321,200 @@ sudo ./adaptive_stress_rt_test.sh
 - 可接受 (准实时): Max延迟 < 500μs
 
 详细文档：[tests/rt-tests/README.md](tests/rt-tests/README.md)
+
+### 9. 网络性能基准测试
+
+使用专业网络性能测试工具进行吞吐量和延迟测试。
+
+**测试工具**:
+- **iperf3**: TCP/UDP吞吐量测试、双向测试、多流测试
+- **netperf**: TCP_STREAM、TCP_RR、UDP性能测试
+- **qperf**: RDMA和常规网络性能测试
+
+**快速开始**:
+```bash
+# iperf3 测试
+cd tests/iperf3
+sudo ./test_iperf3.sh
+
+# netperf 测试
+cd tests/netperf
+sudo ./test_netperf.sh
+
+# qperf 测试（RDMA）
+cd tests/qperf
+sudo ./test_qperf.sh
+```
+
+详细文档：[tests/iperf3/README.md](tests/iperf3/README.md) | [tests/netperf/README.md](tests/netperf/README.md) | [tests/qperf/README.md](tests/qperf/README.md)
+
+### 10. 磁盘I/O性能基准测试
+
+使用专业I/O测试工具评估磁盘和文件系统性能。
+
+**测试工具**:
+- **fio**: 灵活的I/O测试工具，支持多种I/O模式
+- **iozone**: 文件系统基准测试，13种测试模式
+- **lmbench**: 系统微基准测试，包括I/O延迟
+
+**快速开始**:
+```bash
+# fio 测试
+cd tests/fio
+sudo ./run_fio_tests.sh
+
+# iozone 测试
+cd tests/iozone
+sudo ./test_iozone.sh
+
+# lmbench 测试
+cd tests/lmbench
+sudo ./run_lmbench.sh
+```
+
+详细文档：[tests/fio/README.md](tests/fio/README.md) | [tests/iozone/README.md](tests/iozone/README.md) | [tests/lmbench/README.md](tests/lmbench/README.md)
+
+### 11. 内存性能测试
+
+内存带宽、延迟和稳定性测试。
+
+**测试工具**:
+- **stream**: 内存带宽基准测试（Copy、Scale、Add、Triad）
+- **memtester**: 内存故障检测和压力测试
+- **lmbench**: 内存延迟和带宽测试
+- **memory-analysis**: 内存分析和性能分析
+
+**快速开始**:
+```bash
+# STREAM 带宽测试
+cd tests/stream
+./run_stream.sh
+
+# memtester 内存测试
+cd tests/memtester
+sudo ./test_memtester.sh
+
+# 内存分析
+cd tests/memory-analysis
+sudo ./analyze_memory.sh
+```
+
+详细文档：[tests/stream/README.md](tests/stream/README.md) | [tests/memtester/README.md](tests/memtester/README.md)
+
+### 12. 系统综合基准测试
+
+全面的系统性能基准测试套件。
+
+**测试工具**:
+- **UnixBench**: Unix系统综合基准测试（CPU、内存、I/O、系统调用）
+- **lmbench**: 操作系统微基准测试（延迟、带宽、上下文切换）
+- **stressapptest**: 硬件压力测试和稳定性验证
+
+**快速开始**:
+```bash
+# UnixBench 综合测试
+cd tests/unixbench
+./run_unixbench.sh
+
+# lmbench 微基准测试
+cd tests/lmbench
+./run_lmbench.sh
+
+# stressapptest 硬件压力测试
+cd tests/stressapptest
+sudo ./test_stressapptest.sh
+```
+
+详细文档：[tests/unixbench/README.md](tests/unixbench/README.md) | [tests/lmbench/README.md](tests/lmbench/README.md) | [tests/stressapptest/README.md](tests/stressapptest/README.md)
+
+### 13. Linux功能测试
+
+Linux内核功能验证和兼容性测试。
+
+**测试工具**:
+- **LTP (Linux Test Project)**: 6000+测试用例，覆盖系统调用、命令、文件系统
+- **cgroup**: cgroup资源控制和隔离测试
+- **namespace**: Linux命名空间隔离测试
+- **security**: 安全功能测试
+- **selinux**: SELinux强制访问控制测试
+
+**快速开始**:
+```bash
+# LTP 测试
+cd tests/ltp
+sudo ./run_ltp.sh
+
+# cgroup 测试
+cd tests/cgroup
+sudo ./test_cgroup.sh
+
+# namespace 测试
+cd tests/namespace
+sudo ./test_namespace.sh
+
+# SELinux 测试
+cd tests/selinux
+sudo ./test_selinux.sh
+```
+
+详细文档：[tests/ltp/README.md](tests/ltp/README.md) | [tests/cgroup/README.md](tests/cgroup/README.md) | [tests/namespace/README.md](tests/namespace/README.md)
+
+### 14. eBPF和内核追踪
+
+eBPF程序开发和内核动态追踪。
+
+**测试工具**:
+- **ebpf**: eBPF综合测试套件（XDP、TC、tracepoint、kprobe）
+- **bcc**: BPF Compiler Collection工具集
+- **bpftrace**: 高级动态追踪语言
+- **perf**: Linux性能分析工具
+
+**快速开始**:
+```bash
+# eBPF 综合测试
+cd tests/ebpf
+sudo ./test_ebpf.sh
+
+# BCC 工具测试
+cd tests/bcc
+sudo ./check_bcc.sh
+
+# bpftrace 测试
+cd tests/bpftrace
+sudo ./run_all_tests.sh
+
+# perf 分析
+cd tests/perf
+sudo ./test_perf.sh
+```
+
+详细文档：[tests/ebpf/README.md](tests/ebpf/README.md) | [tests/bcc/README.md](tests/bcc/README.md) | [tests/bpftrace/README.md](tests/bpftrace/README.md)
+
+### 15. 虚拟化和内核开发
+
+KVM虚拟化和内核模块开发测试。
+
+**测试工具**:
+- **kvm**: KVM虚拟化功能和性能测试
+- **kernel-module**: 内核模块开发和加载测试
+- **device-drivers**: 设备驱动开发和测试
+
+**快速开始**:
+```bash
+# KVM 虚拟化测试
+cd tests/kvm
+sudo ./test_kvm.sh
+
+# 内核模块测试
+cd tests/kernel-module
+make && sudo ./load_module.sh
+
+# 设备驱动测试
+cd tests/device-drivers
+sudo ./test_drivers.sh
+```
+
+详细文档：[tests/kvm/README.md](tests/kvm/README.md) | [tests/kernel-module/README.md](tests/kernel-module/README.md) | [tests/device-drivers/README.md](tests/device-drivers/README.md)
 
 ## 测试结果
 
