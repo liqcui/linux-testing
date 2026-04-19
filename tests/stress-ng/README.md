@@ -48,6 +48,105 @@ make
 sudo make install
 ```
 
+## 专项测试套件（NEW）
+
+本测试套件新增了专业的子系统专项测试脚本，包含详细的性能评级和结果解读。所有专项测试均位于 `scripts/` 目录。
+
+### 1. 内存子系统专项测试（test_memory.sh）
+
+**功能:** 全面的内存子系统性能评估
+
+```bash
+cd scripts
+sudo ./test_memory.sh
+```
+
+**测试内容（共9项）:**
+- ✓ VM 内存分配压力测试（所有内存操作方法）
+- ✓ memcpy 内存拷贝带宽测试（评估内存带宽 GB/sec）
+- ✓ mmap 内存映射压力测试（页面错误处理性能）
+- ✓ bigheap 大堆内存测试（大页内存性能）
+- ✓ malloc 动态内存分配测试（内存分配器性能）
+- ✓ NUMA 内存访问测试（本地 vs 远程节点）
+- ✓ memory 内存综合压力测试（多种操作混合）
+- ✓ stream 内存流带宽测试（STREAM基准）
+- ✓ cache 缓存压力测试（CPU缓存性能）
+
+**性能评级:**
+- VM内存分配: > 2000 ops/s ★★★★★ 优秀
+- memcpy带宽: > 15 GB/s ★★★★★ 优秀(DDR4-3200)
+- mmap页面错误: < 1000/s ★★★★★ 优秀
+
+### 2. 网络子系统专项测试（test_network.sh）
+
+**功能:** 全面的网络协议栈性能评估
+
+```bash
+cd scripts
+sudo ./test_network.sh
+```
+
+**测试内容（共9项）:**
+- ✓ TCP Socket 压力测试（TCP协议栈性能）
+- ✓ UDP Socket 压力测试（UDP协议栈性能）
+- ✓ Unix Domain Socket 测试（本地IPC性能）
+- ✓ socketpair 套接字对测试（socketpair IPC）
+- ✓ netdev 网络设备压力测试（网络吞吐量）
+- ✓ TCP连接洪水测试（快速建立/销毁连接）
+- ✓ UDP数据包洪水测试（UDP处理能力）
+- ✓ ICMP Echo 压力测试（ICMP协议处理）
+- ✓ sendfile 零拷贝传输测试（零拷贝性能）
+
+**性能评级:**
+- TCP Socket: > 100K ops/s ★★★★★ 优秀
+- UDP Socket: > 150K ops/s ★★★★★ 优秀
+- Unix Socket: > 200K ops/s ★★★★★ 优秀
+
+### 3. 文件系统专项测试（test_filesystem.sh）
+
+**功能:** 全面的文件系统性能评估
+
+```bash
+cd scripts
+sudo ./test_filesystem.sh
+
+# 指定测试路径（默认/tmp）
+sudo TEST_MOUNT=/data ./test_filesystem.sh
+```
+
+**测试内容（共10项）:**
+- ✓ HDD 文件写入压力测试（顺序写入吞吐量）
+- ✓ I/O 综合压力测试（随机I/O性能 IOPS）
+- ✓ sync-file 同步I/O测试（fsync/fdatasync延迟）
+- ✓ dir 目录操作测试（元数据操作性能）
+- ✓ flock 文件锁测试（文件锁争用）
+- ✓ dentry 目录项缓存测试（目录项缓存性能）
+- ✓ seek 文件seek测试（随机访问性能）
+- ✓ readahead 预读测试（预读机制效率）
+- ✓ aio 异步I/O测试（异步I/O性能）
+- ✓ fallocate 文件预分配测试（文件空间预分配）
+
+**性能评级:**
+- NVMe SSD写入: > 2000 MB/s ★★★★★ 优秀
+- SATA SSD写入: > 500 MB/s ★★★★★ 优秀
+- HDD写入: > 150 MB/s ★★★★★ 优秀
+
+### 结果详细解读
+
+**所有测试结果的详细解读请参考: INTERPRETATION_GUIDE.md**
+
+该指南包含：
+- 基础概念（bogo ops、时间指标）
+- 内存测试结果解读（VM、memcpy带宽、mmap、hugepage、NUMA）
+- 网络测试结果解读（TCP/UDP/Unix Socket、吞吐量）
+- 文件系统测试结果解读（HDD、I/O、sync、元数据）
+- 性能优化建议（内存、网络、文件系统）
+
+查看完整解读：
+```bash
+cat INTERPRETATION_GUIDE.md
+```
+
 ## 测试场景说明
 
 ### 1. CPU 压力测试 (`cpu/`)
