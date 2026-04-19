@@ -388,8 +388,23 @@ echo "✓ 系统调用延迟测试 (全面覆盖)"
 echo ""
 echo "结果目录: $RESULTS_DIR"
 echo ""
+
+# 生成深度分析报告
+echo "步骤 7: 生成深度分析报告..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if [[ -f "$SCRIPT_DIR/analyze_results.sh" ]]; then
+    "$SCRIPT_DIR/analyze_results.sh" "$RESULTS_DIR"
+    echo ""
+    echo "✓ 深度分析报告已生成"
+    echo ""
+fi
+
+echo ""
 echo "主要报告:"
-echo "  cat $RESULTS_DIR/comprehensive_report.txt"
+echo "  cat $RESULTS_DIR/comprehensive_report.txt   # 综合报告"
+echo "  cat $RESULTS_DIR/detailed_analysis.txt      # 深度解读（含示例）"
 echo ""
 echo "查看具体测试:"
 echo "  cat $RESULTS_DIR/bw_mem_parametric.txt      # 内存带宽"
