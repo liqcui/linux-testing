@@ -1,0 +1,6 @@
+# 文件上下文定义
+# 用于test_policy模块
+
+/usr/local/bin/test_selinux_prog    --  gen_context(system_u:object_r:test_exec_t,s0)
+/var/test(/.*)?                         gen_context(system_u:object_r:test_file_t,s0)
+/tmp/test(/.*)?                         gen_context(system_u:object_r:test_tmp_t,s0)

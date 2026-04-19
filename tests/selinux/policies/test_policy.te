@@ -1,0 +1,51 @@
+policy_module(test_policy, 1.0.0)
+
+########################################
+# 测试策略模块
+# 用于验证SELinux策略编译和加载
+########################################
+
+# 声明测试类型
+type test_t;
+type test_exec_t;
+type test_file_t;
+type test_tmp_t;
+
+# 设置域转换
+domain_type(test_t)
+domain_entry_file(test_t, test_exec_t)
+
+# 基础权限
+allow test_t self:process { fork signal sigchld };
+allow test_t self:fifo_file rw_fifo_file_perms;
+allow test_t self:unix_stream_socket create_stream_socket_perms;
+
+# 文件访问权限
+allow test_t test_file_t:file { read getattr open };
+allow test_t test_file_t:dir { read getattr search open };
+
+# 临时文件权限
+allow test_t test_tmp_t:file { create read write getattr unlink open };
+allow test_t test_tmp_t:dir { add_name remove_name write search };
+
+# 允许读取/etc/passwd用于测试
+files_read_etc_files(test_t)
+
+# 允许基础系统调用
+kernel_read_system_state(test_t)
+
+# 允许使用终端
+term_use_all_ptys(test_t)
+term_use_all_ttys(test_t)
+
+# 日志记录
+logging_send_syslog_msg(test_t)
+
+########################################
+# 文件上下文定义
+########################################
+
+# 将在安装脚本中处理
+# /usr/local/bin/test_prog    -- gen_context(system_u:object_r:test_exec_t,s0)
+# /var/test(/.*)?              -- gen_context(system_u:object_r:test_file_t,s0)
+# /tmp/test(/.*)?              -- gen_context(system_u:object_r:test_tmp_t,s0)
