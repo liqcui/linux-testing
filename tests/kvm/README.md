@@ -2,7 +2,7 @@
 
 ## 概述
 
-本测试套件提供了完整的KVM (Kernel-based Virtual Machine) 虚拟化测试工具，包括基础功能测试、嵌套虚拟化测试和性能评估。
+本测试套件提供了完整的KVM (Kernel-based Virtual Machine) 虚拟化测试工具，包括基础功能测试、嵌套虚拟化测试、热迁移测试和性能评估。
 
 ## 目录结构
 
@@ -11,7 +11,8 @@ kvm/
 ├── README.md                       # 本文件
 ├── scripts/
 │   ├── test_kvm_basic.sh           # KVM基础功能测试
-│   └── test_nested_virt.sh         # 嵌套虚拟化测试
+│   ├── test_nested_virt.sh         # 嵌套虚拟化测试
+│   └── test_live_migration.sh      # 热迁移测试
 ├── images/                         # 虚拟机镜像目录
 └── results/                        # 测试结果目录
 ```
@@ -336,6 +337,350 @@ qemu-system-x86_64 \
 - `performance.txt` - 性能分析
 - `verification.txt` - 验证方法
 - `troubleshooting.txt` - 故障排查
+- `summary.txt` - 测试总结
+
+## 测试3: KVM热迁移
+
+### 功能特性
+
+- 热迁移原理说明（Pre-copy, Post-copy）
+- 环境要求检查（网络、存储、CPU兼容性）
+- QEMU热迁移配置和命令
+- libvirt热迁移多种方式（TCP、SSH、TLS）
+- 性能优化建议（压缩、RDMA、并行传输）
+- 故障排查指南
+- 安全考虑（加密、认证）
+
+### 运行测试
+
+```bash
+cd scripts
+sudo ./test_live_migration.sh
+```
+
+### 手动操作
+
+#### QEMU热迁移（单机模拟）
+
+**启动源VM：**
+```bash
+qemu-system-x86_64 \
+    -enable-kvm \
+    -m 512 \
+    -smp 2 \
+    -drive file=vm.qcow2,format=qcow2 \
+    -monitor telnet:127.0.0.1:4445,server,nowait \
+    -vnc :0 \
+    -name source-vm
+```
+
+**启动目标VM（等待迁移）：**
+```bash
+qemu-system-x86_64 \
+    -enable-kvm \
+    -m 512 \
+    -smp 2 \
+    -drive file=vm.qcow2,format=qcow2 \
+    -incoming tcp:0.0.0.0:4444 \
+    -monitor telnet:127.0.0.1:4446,server,nowait \
+    -vnc :1 \
+    -name dest-vm
+```
+
+**执行迁移：**
+```bash
+telnet localhost 4445
+(qemu) migrate -d tcp:localhost:4444
+(qemu) info migrate
+```
+
+#### libvirt热迁移
+
+**SSH迁移（推荐）：**
+```bash
+# 配置SSH密钥认证
+ssh-keygen
+ssh-copy-id root@target-host
+
+# 执行迁移
+virsh migrate --live \
+    --verbose \
+    vm-name \
+    qemu+ssh://target-host/system
+```
+
+**TCP迁移：**
+```bash
+# 目标主机配置 /etc/libvirt/libvirtd.conf
+listen_tls = 0
+listen_tcp = 1
+tcp_port = "16509"
+auth_tcp = "none"
+
+# 重启libvirtd
+systemctl restart libvirtd
+
+# 执行迁移
+virsh migrate --live vm-name qemu+tcp://target-host/system
+```
+
+**带存储迁移：**
+```bash
+virsh migrate --live --copy-storage-all vm-name qemu+ssh://target-host/system
+```
+
+**监控迁移进度：**
+```bash
+# 实时监控
+watch -n 1 'virsh domjobinfo vm-name'
+
+# 查看已完成的迁移统计
+virsh domjobinfo vm-name --completed
+```
+
+**取消迁移：**
+```bash
+virsh domjobabort vm-name
+```
+
+### 热迁移架构
+
+```
+源主机 (Source)                     目标主机 (Target)
+┌─────────────────────┐            ┌─────────────────────┐
+│  运行中的VM          │            │  等待接收的VM        │
+│  ┌───────────────┐  │            │  ┌───────────────┐  │
+│  │ 应用程序       │  │  迁移流    │  │ 应用程序       │  │
+│  │ 操作系统       │◄─┼────────────┼─►│ 操作系统       │  │
+│  └───────────────┘  │            │  └───────────────┘  │
+│  内存/CPU/设备      │            │  内存/CPU/设备      │
+└─────────────────────┘            └─────────────────────┘
+         │                                  │
+         └──────── 共享存储 ────────────────┘
+              (NFS/iSCSI/Ceph)
+```
+
+### 迁移过程
+
+```
+阶段1: 预迁移 (Pre-migration)
+├─ 在目标主机启动VM实例（暂停状态）
+├─ 建立源和目标之间的迁移连接
+└─ 验证CPU兼容性、存储访问等
+
+阶段2: 迭代拷贝 (Iterative Copy)
+├─ 第1轮: 复制所有内存页到目标
+├─ 第2轮: 复制第1轮中被修改的脏页
+├─ 第3轮: 复制第2轮中的脏页
+└─ ... 持续迭代直到脏页率降低
+
+阶段3: 停止并拷贝 (Stop-and-Copy)
+├─ 暂停源VM
+├─ 传输剩余脏页
+├─ 传输CPU状态、设备状态
+└─ 停机时间窗口（100-500ms）
+
+阶段4: 提交 (Commit)
+├─ 在目标主机激活VM
+├─ 销毁源VM
+└─ 完成迁移
+```
+
+### 热迁移类型
+
+**Pre-copy迁移：**
+- 先复制内存，VM继续运行
+- 多轮迭代复制脏页
+- 适合一般应用
+- 停机时间短
+
+**Post-copy迁移：**
+- 先迁移CPU状态，立即启动目标VM
+- 按需从源主机拉取内存页
+- 适合内存密集型应用
+- 总迁移时间更短，但依赖网络
+
+**存储迁移：**
+- 同时迁移VM和磁盘
+- 不需要共享存储
+- 时间较长（取决于磁盘大小）
+
+### 性能优化
+
+**内存优化：**
+```bash
+# 启用压缩
+virsh migrate --live --compressed vm-name target
+
+# 设置迁移带宽（MB/s）
+virsh migrate-setspeed vm-name 1000
+
+# 设置最大停机时间（毫秒）
+virsh migrate-setmaxdowntime vm-name 500
+
+# QEMU monitor设置
+(qemu) migrate_set_speed 1000M
+(qemu) migrate_set_downtime 0.5
+```
+
+**网络优化：**
+```bash
+# 使用RDMA（如果硬件支持）
+virsh migrate --live --rdma-pin-all vm-name target
+
+# 调整TCP参数
+sysctl -w net.core.rmem_max=134217728
+sysctl -w net.core.wmem_max=134217728
+sysctl -w net.ipv4.tcp_rmem='4096 87380 67108864'
+sysctl -w net.ipv4.tcp_wmem='4096 65536 67108864'
+```
+
+**迁移策略：**
+```bash
+# Post-copy模式（适合内存密集型）
+virsh migrate --live --postcopy vm-name target
+
+# Auto-converge（自动调整vCPU降低脏页率）
+virsh migrate --live --auto-converge vm-name target
+
+# 并行迁移
+virsh migrate --live --parallel --parallel-connections 4 vm-name target
+```
+
+### 性能指标
+
+| 指标 | 典型值 | 说明 |
+|------|--------|------|
+| 总迁移时间 | 10-60秒 | 取决于内存大小和网络 |
+| 停机时间 | 100-500ms | VM暂停时间 |
+| 传输速度 | 80-800MB/s | 取决于网络带宽 |
+| 迭代轮次 | 2-5轮 | 取决于脏页率 |
+
+**影响因素：**
+- VM内存大小
+- 工作负载类型（内存密集型更慢）
+- 网络带宽和延迟
+- CPU性能（压缩场景）
+- 是否使用压缩/RDMA
+
+### 安全考虑
+
+**风险：**
+1. 明文传输 - TCP迁移未加密
+2. 未授权迁移 - 无认证的libvirtd
+3. 中间人攻击 - 迁移流量被劫持
+
+**安全措施：**
+
+**使用TLS加密：**
+```bash
+# /etc/libvirt/libvirtd.conf
+listen_tls = 1
+key_file = "/etc/pki/libvirt/private/serverkey.pem"
+cert_file = "/etc/pki/libvirt/servercert.pem"
+ca_file = "/etc/pki/CA/cacert.pem"
+
+# 执行迁移
+virsh migrate --live qemu+tls://target/system
+```
+
+**使用SSH隧道（推荐）：**
+```bash
+virsh migrate --live qemu+ssh://target/system
+```
+
+**启用SASL认证：**
+```bash
+# /etc/libvirt/libvirtd.conf
+auth_tcp = "sasl"
+```
+
+**防火墙配置：**
+```bash
+# 仅允许特定主机
+firewall-cmd --add-rich-rule='rule family="ipv4" \
+    source address="192.168.1.0/24" \
+    port port="16509" protocol="tcp" accept'
+```
+
+### 常见问题
+
+**问题1: CPU不兼容**
+```
+错误: internal error: unable to execute QEMU command 'migrate'
+原因: 源和目标CPU型号不同
+```
+
+**解决：**
+```bash
+# 使用CPU兼容模式
+virsh edit vm-name
+<cpu mode='custom' match='exact'>
+  <model>qemu64</model>
+</cpu>
+```
+
+**问题2: 迁移超时**
+```
+现象: 迁移长时间不完成
+原因: 脏页产生速度 > 传输速度
+```
+
+**解决：**
+```bash
+# 增加迁移带宽
+virsh migrate-setspeed vm-name 2000
+
+# 使用auto-converge
+virsh migrate --live --auto-converge vm-name target
+
+# 使用post-copy
+virsh migrate --live --postcopy vm-name target
+```
+
+**问题3: 网络连接失败**
+```
+错误: Unable to connect to server
+原因: 防火墙/网络不通
+```
+
+**解决：**
+```bash
+# 检查防火墙
+firewall-cmd --add-port=16509/tcp --permanent
+firewall-cmd --reload
+
+# 测试连通性
+nc -zv target-host 16509
+
+# 使用SSH迁移
+virsh migrate --live qemu+ssh://target/system
+```
+
+**问题4: 存储访问失败**
+```
+错误: Cannot access storage file
+原因: 目标主机无法访问镜像
+```
+
+**解决：**
+```bash
+# 使用共享存储（NFS/iSCSI）
+# 或使用存储迁移
+virsh migrate --live --copy-storage-all vm-name target
+```
+
+### 测试结果
+
+- `principles.txt` - 热迁移原理
+- `requirements.txt` - 环境要求
+- `qemu-migration.txt` - QEMU迁移命令
+- `libvirt-migration.txt` - libvirt迁移方式
+- `optimization.txt` - 性能优化
+- `troubleshooting.txt` - 故障排查
+- `test-examples.txt` - 测试示例
+- `benchmarks.txt` - 性能基准
+- `security.txt` - 安全考虑
 - `summary.txt` - 测试总结
 
 ## 常用QEMU参数
