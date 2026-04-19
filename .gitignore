@@ -9,6 +9,43 @@ tests/sched/sched_test
 tests/block/block_test
 tests/lock/lock_test
 
+# bpftrace mock programs
+tests/bpftrace/mock_programs/io_generator
+tests/bpftrace/mock_programs/latency_simulator
+tests/bpftrace/mock_programs/memory_allocator
+tests/bpftrace/mock_programs/process_spawner
+tests/bpftrace/mock_programs/syscall_simulator
+
+# mem test
+tests/mem/mem_test
+
+# STREAM binaries
+tests/stream/programs/stream
+tests/stream/programs/stream_*
+
+# LMbench binaries
+tests/lmbench/programs/lat_syscall
+tests/lmbench/programs/lat_ctx
+tests/lmbench/programs/lat_mem
+tests/lmbench/programs/bw_mem
+
+# Device driver test programs
+tests/device-drivers/spi/programs/spidev_test
+tests/device-drivers/gpio/programs/gpio_test
+
+# SELinux test programs
+tests/selinux/programs/test_selinux_prog
+tests/selinux/policies/*.mod
+tests/selinux/policies/*.pp
+
+# Cgroup test programs
+tests/cgroup/programs/cpu_hog
+tests/cgroup/programs/mem_hog
+tests/cgroup/programs/io_hog
+
+# Namespace test programs
+tests/namespace/programs/namespace_test
+
 # 测试结果（输出目录，不包括文档）
 /results/
 
