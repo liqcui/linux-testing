@@ -12,6 +12,7 @@
 from __future__ import print_function
 from bcc import BPF
 import argparse
+import os
 import time
 import sys
 
@@ -113,7 +114,7 @@ def main():
     args = parser.parse_args()
 
     # 检查 root 权限
-    if sys.geteuid() != 0:
+    if os.geteuid() != 0:
         print("错误: 需要 root 权限运行", file=sys.stderr)
         sys.exit(1)
 
