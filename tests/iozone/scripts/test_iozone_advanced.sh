@@ -304,7 +304,7 @@ echo ""
     echo "========================================"
     echo ""
     echo "测试参数:"
-    echo "  - 文件大小: 1GB per thread"
+    echo "  - 文件大小: 按线程数缩放（总数据量约 1–2GB，避免高线程时过久或占满磁盘）"
     echo "  - 记录大小: 4KB"
     echo "  - 线程数: 1, 2, 4, 8, 16, 32"
     echo ""
@@ -325,23 +325,36 @@ fi
 for threads in "${THREAD_COUNTS[@]}"; do
     echo "测试线程数: $threads"
 
+    # 每线程文件大小：控制总占用约 1–2GB，高线程时明显缩短耗时（4×1G 易看似卡死）
+    case $threads in
+        1|2)   per_thread_size="1g" ;;
+        4)     per_thread_size="512m" ;;
+        8)     per_thread_size="256m" ;;
+        16)    per_thread_size="128m" ;;
+        32)    per_thread_size="64m" ;;
+        *)     per_thread_size="256m" ;;
+    esac
+
     # 生成文件列表
     file_list=""
     for ((i=1; i<=threads; i++)); do
         file_list="$file_list $TEST_DIR/test_t${threads}_${i}.tmp"
     done
 
-    $IOZONE_BIN -i 0 -i 1 -s 1g -r 4k -t $threads -F $file_list \
-        > "$RESULTS_DIR/threads_${threads}.txt" 2>&1
+    echo "  每线程 -s $per_thread_size（iozone 输出同时写入终端与 threads_${threads}.txt）..."
+    # 勿仅重定向到文件：高线程时长时间无输出会被误认为挂起；tee 便于观察进度
+    $IOZONE_BIN -i 0 -i 1 -s "$per_thread_size" -r 4k -t "$threads" -F $file_list \
+        2>&1 | tee "$RESULTS_DIR/threads_${threads}.txt"
+    iozone_rc=${PIPESTATUS[0]}
 
-    if [[ $? -eq 0 ]]; then
-        # 提取聚合结果
-        write_total=$(grep "Children see throughput for.*writers" "$RESULTS_DIR/threads_${threads}.txt" | \
-            awk '{print $(NF-1)}')
-        read_total=$(grep "Children see throughput for.*readers" "$RESULTS_DIR/threads_${threads}.txt" | \
-            awk '{print $(NF-1)}')
-        reread_total=$(grep "Children see throughput for.*re-readers" "$RESULTS_DIR/threads_${threads}.txt" | \
-            awk '{print $(NF-1)}')
+    if [[ $iozone_rc -eq 0 ]]; then
+        # 提取聚合结果（避免 "readers" 匹配到 "re-readers" 内子串导致多行、printf 错乱）
+        write_total=$(grep -F 'initial writers' "$RESULTS_DIR/threads_${threads}.txt" | \
+            grep -F 'Children see throughput' | tail -1 | awk '{print $(NF-1)}')
+        read_total=$(grep -F ' readers' "$RESULTS_DIR/threads_${threads}.txt" | \
+            grep -vF 're-readers' | grep -F 'Children see throughput' | tail -1 | awk '{print $(NF-1)}')
+        reread_total=$(grep -F 're-readers' "$RESULTS_DIR/threads_${threads}.txt" | \
+            grep -F 'Children see throughput' | tail -1 | awk '{print $(NF-1)}')
 
         printf "%-7s  %-13s %-13s %s\n" "$threads" "$write_total" "$read_total" "$reread_total" | \
             tee -a "$RESULTS_DIR/multithread.txt"
